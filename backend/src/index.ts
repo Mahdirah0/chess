@@ -1,7 +1,6 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import cors from 'cors';
 
 const app = express();
 const server = createServer(app);
@@ -17,30 +16,48 @@ app.use(express.urlencoded({ extended: true }));
 let color = '';
 let playerCount = 0;
 
-io.on('connection', (socket) => {
-  console.log('a user connected');
+const gameBoard = [];
 
-  socket.on('join_game', (room) => {
-    socket.join('1');
-    playerCount++;
-    let player = '';
+const checkRoomSize = async (room: string) => {
+  const sockets = await io.in(room).fetchSockets();
+  return sockets.length;
+};
 
-    if (playerCount % 2 == 0) {
-      player = 'player 2';
-      color = 'black';
-    } else {
-      player = 'player 1';
-      color = 'white';
+const gameRoom = [
+  {
+    room_example: {
+      player1: 'mahdi',
+      player2: 'john',
+    },
+  },
+];
+
+// following this stricture
+// after the user joined the room we can privately message them
+// the colour (white or black) and the opponents name
+
+io.on('connection', async (socket) => {
+  socket.on('join', async ({ room, name }) => {
+    socket.join([room, name]);
+    const numberOfPeople: number = await checkRoomSize(room);
+
+    if (numberOfPeople === 2) {
+      let player1 = gameRoom[0].room_example.player1;
+      let player2 = gameRoom[0].room_example.player2;
+      io.to(player1).emit('start_game', { color: 'white', opponent: player2 });
+      io.to(player2).emit('start_game', { color: 'black', opponent: player1 });
     }
 
-    socket.emit('your_name', player, color);
-    if (playerCount == 2) {
-      playerCount = 0;
-    }
+    // if (numberOfPeople === 1) {
+    //   console.log(room);
+    //   socket.emit('start_game', { color: 'white' });
+    // } else if (numberOfPeople === 2) {
+    //   socket.emit('start_game', { color: 'black' });
+    // }
   });
 
   socket.on('move_piece', (room, row, col, tRow, tCol) => {
-    socket.to(room).emit('move_piece', 7 - row, 7 - col, 7 - tRow, 7 - tCol);
+    socket.to('room').emit('move_piece', 7 - row, 7 - col, 7 - tRow, 7 - tCol);
   });
 });
 

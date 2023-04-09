@@ -14,6 +14,7 @@ const WHITE_VIEW = ['r', 'k', 'b', 'q', 'ki', 'b', 'k', 'r'];
 
 export const createBoard = (playerColor) => {
   const enemyColor = playerColor === 'white' ? 'black' : 'white';
+
   let playerFirstLetter = playerColor[0];
   let enemyFirstLetter = enemyColor[0];
   let pieces = [];

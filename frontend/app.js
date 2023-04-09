@@ -1,6 +1,7 @@
 const boardElement = document.querySelector('.board');
 const button = document.querySelector('.roomButton');
-const input = document.querySelector('.roomInput');
+const nameInput = document.querySelector('.nameInput');
+const roomInput = document.querySelector('.roomInput');
 
 import { createBoard, renderBoard, board } from './modules/board.js';
 import {
@@ -11,7 +12,7 @@ import {
 } from './modules/generatePieceMoves.js';
 
 let turn = 'white';
-let playerColor = 'white';
+let playerColor = '';
 
 const ENEMY_PIECE_COL = 'red';
 const NEUTRAL_PIECE_COL = '#012300';
@@ -26,54 +27,53 @@ let userSelection = {
 
 let validMove = [];
 
-// const socket = io('http://localhost:5000/');
+const socket = io('http://localhost:5000/');
 
-// socket.on('move_piece', (row, col, tRow, tCol) => {
-//   const currentPiece = board[row][col];
-//   console.log(currentPiece);
+socket.on('move_piece', (row, col, tRow, tCol) => {
+  const currentPiece = board[row][col];
+  console.log(currentPiece);
 
-//   console.log(row, col);
-//   console.log(tRow, tCol);
+  validMove.splice(0, validMove.length);
 
-//   validMove.splice(0, validMove.length);
+  board[tRow][tCol] = {
+    letter: currentPiece.letter,
+    pathToIcon: currentPiece.pathToIcon,
+    color: currentPiece.color,
+  };
 
-//   board[tRow][tCol] = {
-//     letter: currentPiece.letter,
-//     pathToIcon: currentPiece.pathToIcon,
-//     color: currentPiece.color,
-//   };
+  board[row][col] = {
+    letter: '',
+    pathToIcon: '',
+    color: '',
+  };
 
-//   board[row][col] = {
-//     letter: '',
-//     pathToIcon: '',
-//     color: '',
-//   };
+  while (boardElement.firstChild) {
+    boardElement.removeChild(boardElement.firstChild);
+  }
 
-//   while (boardElement.firstChild) {
-//     boardElement.removeChild(boardElement.firstChild);
-//   }
+  renderBoard(boardElement);
+  addColListener();
 
-//   renderBoard();
-//   addColListener();
+  userSelection = {
+    row: -1,
+    col: -1,
+    color: '',
+    letter: '',
+    selected: false,
+  };
 
-//   startSelection = {
-//     row: -1,
-//     col: -1,
-//     color: '',
-//     letter: '',
-//     selected: false,
-//   };
-
-//   if (turn === 'white') {
-//     turn = 'black';
-//   } else {
-//     turn = 'white';
-//   }
-// });
+  if (turn === 'white') {
+    turn = 'black';
+  } else {
+    turn = 'white';
+  }
+});
 
 const move = (tRow, tCol) => {
   const { row, col } = userSelection;
-  // socket.emit('move_piece', '1', row, col, tRow, tCol);
+  console.log(row, col);
+  console.log(tRow, tCol);
+
   const currentPiece = board[row][col];
 
   validMove.splice(0, validMove.length);
@@ -167,10 +167,12 @@ const generateMove = () => {
   }
 };
 
-const isMoveLegal = (row, col) => {
+const isMoveLegal = (tRow, tCol) => {
   for (let i = 0; i < validMove.length; i++) {
-    if (row === validMove[i].row && col === validMove[i].col) {
-      move(row, col);
+    if (tRow === validMove[i].row && tCol === validMove[i].col) {
+      const { row, col } = userSelection;
+      move(tRow, tCol);
+      socket.emit('move_piece', 'room', row, col, tRow, tCol);
     }
   }
 };
@@ -208,6 +210,7 @@ const handleClick = (e) => {
     generateMove();
     showMove();
   } else if (userSelection.selected) {
+    console.log(userSelection);
     isMoveLegal(row, col);
   }
 };
@@ -221,21 +224,15 @@ const addColListener = () => {
 };
 
 button.addEventListener('click', () => {
-  const { value } = input;
+  const { value: room } = roomInput;
+  const { value: name } = nameInput;
 
-  // socket.emit('join_game', value);
+  socket.emit('join', { room, name });
 });
 
-const startGame = () => {
-  createBoard(playerColor);
+socket.on('start_game', ({ color, opponent }) => {
+  playerColor = color;
+  createBoard(color);
   renderBoard(boardElement);
   addColListener();
-};
-
-startGame();
-
-// socket.on('your_name', (name, color) => {
-//   playerColor = color;
-//   board = createBoard();
-//   startGame();
-// });
+});
