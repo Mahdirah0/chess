@@ -1,21 +1,29 @@
 const boardElement = document.querySelector('.board');
-const button = document.querySelector('.roomButton');
-const nameInput = document.querySelector('.nameInput');
-const roomInput = document.querySelector('.roomInput');
 
-import { createBoard, renderBoard, board } from './modules/board.js';
+const playAsWhiteButton = document.querySelector('.play-as-white');
+const playAsBlackButton = document.querySelector('.play-as-black');
+const playAsText = document.querySelector('.play-as-text');
+
+import { createBoard, renderBoard } from './modules/board.js';
 import {
   generateKnightMoves,
   generateBishopMoves,
   generateRookMoves,
   generatePawnMoves,
+  generateKingMoves,
 } from './modules/generatePieceMoves.js';
+import { ENEMY_PIECE_COL, NEUTRAL_PIECE_COL, ROW, COL } from './constant.js';
 
-let turn = 'white';
+const board = Array.from(Array(ROW), () =>
+  new Array(COL).fill({
+    letter: '',
+    pathToIcon: '',
+    color: '',
+  })
+);
+
+let gameColorTurn = 'white';
 let playerColor = '';
-
-const ENEMY_PIECE_COL = 'red';
-const NEUTRAL_PIECE_COL = '#012300';
 
 let userSelection = {
   row: -1,
@@ -25,76 +33,46 @@ let userSelection = {
   color: '',
 };
 
-let validMove = [];
+let validPieceMoves = [];
 
-const socket = io('http://localhost:5000/');
-
-socket.on('move_piece', (row, col, tRow, tCol) => {
-  const currentPiece = board[row][col];
-  console.log(currentPiece);
-
-  validMove.splice(0, validMove.length);
-
-  board[tRow][tCol] = {
-    letter: currentPiece.letter,
-    pathToIcon: currentPiece.pathToIcon,
-    color: currentPiece.color,
-  };
-
-  board[row][col] = {
-    letter: '',
-    pathToIcon: '',
-    color: '',
-  };
-
-  while (boardElement.firstChild) {
-    boardElement.removeChild(boardElement.firstChild);
-  }
-
-  renderBoard(boardElement);
-  addColListener();
-
-  userSelection = {
-    row: -1,
-    col: -1,
-    color: '',
-    letter: '',
-    selected: false,
-  };
-
-  if (turn === 'white') {
-    turn = 'black';
+const switchColorTurn = () => {
+  if (gameColorTurn === 'white') {
+    gameColorTurn = 'black';
   } else {
-    turn = 'white';
+    gameColorTurn = 'white';
   }
-});
+};
 
 const move = (tRow, tCol) => {
   const { row, col } = userSelection;
-  console.log(row, col);
-  console.log(tRow, tCol);
+
+  if (!userSelection.selected) return;
 
   const currentPiece = board[row][col];
 
-  validMove.splice(0, validMove.length);
+  validPieceMoves.splice(0, validPieceMoves.length);
+
+  // updating board game
 
   board[tRow][tCol] = {
     letter: currentPiece.letter,
     pathToIcon: currentPiece.pathToIcon,
     color: currentPiece.color,
+    direction: currentPiece.direction,
   };
 
   board[row][col] = {
     letter: '',
     pathToIcon: '',
     color: '',
+    direction: currentPiece.direction,
   };
 
   while (boardElement.firstChild) {
     boardElement.removeChild(boardElement.firstChild);
   }
 
-  renderBoard(boardElement);
+  renderBoard(board, boardElement);
   addColListener();
 
   userSelection = {
@@ -104,12 +82,6 @@ const move = (tRow, tCol) => {
     letter: '',
     selected: false,
   };
-
-  if (turn === 'white') {
-    turn = 'black';
-  } else {
-    turn = 'white';
-  }
 };
 
 const displaySquareMove = (pos, bgColor) => {
@@ -133,13 +105,13 @@ const displaySquareMove = (pos, bgColor) => {
   });
 };
 
-const showMove = () => {
+const showValidMoves = () => {
   const { row, col } = userSelection;
 
   const currentDiv = document.querySelector(`div[pos="${row}-${col}"]`);
   currentDiv.style.backgroundColor = 'green';
 
-  validMove.forEach((move) => {
+  validPieceMoves.forEach((move) => {
     const pos = `${move.row}-${move.col}`;
 
     if (move.enemy) {
@@ -154,45 +126,47 @@ const generateMove = () => {
   const { letter } = userSelection;
 
   if (letter.toLowerCase() === 'r') {
-    validMove = generateRookMoves(userSelection);
+    validPieceMoves = generateRookMoves(board, userSelection);
   } else if (letter.toLowerCase() === 'k') {
-    validMove = generateKnightMoves(userSelection);
+    validPieceMoves = generateKnightMoves(board, userSelection);
   } else if (letter.toLowerCase() === 'b') {
-    validMove = generateBishopMoves(userSelection);
+    validPieceMoves = generateBishopMoves(board, userSelection);
   } else if (letter.toLowerCase() === 'q') {
-    validMove = generateRookMoves(userSelection);
-    validMove = generateBishopMoves(userSelection);
+    validPieceMoves = generateRookMoves(board, userSelection);
+    validPieceMoves = generateBishopMoves(board, userSelection);
   } else if (letter.toLowerCase() === 'p') {
-    validMove = generatePawnMoves(userSelection);
+    validPieceMoves = generatePawnMoves(board, userSelection);
+  } else if (letter.toLowerCase() === 'ki') {
+    validPieceMoves = generateKingMoves(board, userSelection);
   }
 };
 
 const isMoveLegal = (tRow, tCol) => {
-  for (let i = 0; i < validMove.length; i++) {
-    if (tRow === validMove[i].row && tCol === validMove[i].col) {
-      const { row, col } = userSelection;
-      move(tRow, tCol);
-      socket.emit('move_piece', 'room', row, col, tRow, tCol);
+  for (let i = 0; i < validPieceMoves.length; i++) {
+    if (validPieceMoves[i].row === tRow && validPieceMoves[i].col === tCol) {
+      return true;
     }
   }
 };
 
 const handleClick = (e) => {
+  // getting clicked element information
   const pos = e.target.attributes.pos.value;
-  const row = parseInt(pos[0]);
-  const col = parseInt(pos[2]);
-  const { letter, color } = board[row][col];
+  const clickedRow = parseInt(pos[0]);
+  const clickedCol = parseInt(pos[2]);
+  const { letter, color } = board[clickedRow][clickedCol];
 
-  let samePiece = userSelection.row === row && userSelection.col === col;
   let sameTeam = userSelection.color === color;
+  let samePiece =
+    userSelection.row === clickedRow && userSelection.col === clickedCol;
 
   if (sameTeam) {
     while (boardElement.firstChild) {
       boardElement.removeChild(boardElement.firstChild);
     }
 
-    validMove.splice(0, validMove.length);
-    renderBoard(boardElement);
+    validPieceMoves.splice(0, validPieceMoves.length);
+    renderBoard(board, boardElement);
     addColListener();
   }
 
@@ -201,17 +175,25 @@ const handleClick = (e) => {
       boardElement.removeChild(boardElement.firstChild);
     }
 
-    renderBoard(boardElement);
+    renderBoard(board, boardElement);
     addColListener();
     userSelection.selected = false;
-    validMove.splice(0, validMove.length);
-  } else if (turn === color && playerColor === color) {
-    userSelection = { row, col, letter, color, selected: true };
+    validPieceMoves.splice(0, validPieceMoves.length);
+  } else if (gameColorTurn === color) {
+    userSelection = {
+      row: clickedRow,
+      col: clickedCol,
+      letter,
+      color,
+      selected: true,
+    };
     generateMove();
-    showMove();
+    showValidMoves();
   } else if (userSelection.selected) {
-    console.log(userSelection);
-    isMoveLegal(row, col);
+    if (isMoveLegal(clickedRow, clickedCol)) {
+      move(clickedRow, clickedCol);
+      switchColorTurn();
+    }
   }
 };
 
@@ -223,16 +205,31 @@ const addColListener = () => {
   });
 };
 
-button.addEventListener('click', () => {
-  const { value: room } = roomInput;
-  const { value: name } = nameInput;
+const main = () => {
+  playerColor = 'white';
+  createBoard(board, playerColor);
+  renderBoard(board, boardElement);
+  addColListener();
+};
 
-  socket.emit('join', { room, name });
+main();
+
+const hideHTMLButtons = () => {
+  playAsWhiteButton.style.display = 'none';
+  playAsBlackButton.style.display = 'none';
+  playAsText.style.display = 'none';
+};
+
+playAsWhiteButton.addEventListener('click', () => {
+  playerColor = 'white';
+  hideHTMLButtons();
+
+  main();
 });
 
-socket.on('start_game', ({ color, opponent }) => {
-  playerColor = color;
-  createBoard(color);
-  renderBoard(boardElement);
-  addColListener();
+playAsBlackButton.addEventListener('click', () => {
+  playerColor = 'black';
+  hideHTMLButtons();
+
+  main();
 });
