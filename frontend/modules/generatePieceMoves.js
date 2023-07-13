@@ -186,17 +186,35 @@ export const generatePawnMoves = (board, selection) => {
     if (isSquareAboveEmpty) {
       validMoves.push({ row: row - 1, col, enemy: false });
     }
-    if (
-      board[row - 1][col + 1].color !== color &&
-      board[row - 1][col + 1].letter !== ''
-    ) {
-      validMoves.push({ row: row - 1, col: col + 1, enemy: true });
+    if (col !== 7 && col !== 0) {
+      if (
+        board[row - 1][col + 1].color !== color &&
+        board[row - 1][col + 1].letter !== ''
+      ) {
+        validMoves.push({ row: row - 1, col: col + 1, enemy: true });
+      }
+      if (
+        board[row - 1][col - 1].color !== color &&
+        board[row - 1][col - 1].letter !== ''
+      ) {
+        validMoves.push({ row: row - 1, col: col - 1, enemy: true });
+      }
     }
-    if (
-      board[row - 1][col - 1].color !== color &&
-      board[row - 1][col - 1].letter !== ''
-    ) {
-      validMoves.push({ row: row - 1, col: col - 1, enemy: true });
+    if (col === 7) {
+      if (
+        board[row - 1][col - 1].color !== color &&
+        board[row - 1][col - 1].letter !== ''
+      ) {
+        validMoves.push({ row: row - 1, col: col - 1, enemy: true });
+      }
+    }
+    if (col === 0) {
+      if (
+        board[row - 1][col + 1].color !== color &&
+        board[row - 1][col + 1].letter !== ''
+      ) {
+        validMoves.push({ row: row - 1, col: col + 1, enemy: true });
+      }
     }
   } else {
     const isSquareAboveEmpty = board[row + 1][col].letter === '';
@@ -210,17 +228,35 @@ export const generatePawnMoves = (board, selection) => {
     if (isSquareAboveEmpty) {
       validMoves.push({ row: row + 1, col, enemy: false });
     }
-    if (
-      board[row + 1][col + 1].color !== color &&
-      board[row + 1][col + 1].letter !== ''
-    ) {
-      validMoves.push({ row: row + 1, col: col + 1, enemy: true });
+    if (col !== 7 && col !== 0) {
+      if (
+        board[row + 1][col + 1].color !== color &&
+        board[row + 1][col + 1].letter !== ''
+      ) {
+        validMoves.push({ row: row + 1, col: col + 1, enemy: true });
+      }
+      if (
+        board[row + 1][col - 1].color !== color &&
+        board[row + 1][col - 1].letter !== ''
+      ) {
+        validMoves.push({ row: row + 1, col: col - 1, enemy: true });
+      }
     }
-    if (
-      board[row + 1][col - 1].color !== color &&
-      board[row + 1][col - 1].letter !== ''
-    ) {
-      validMoves.push({ row: row + 1, col: col - 1, enemy: true });
+    if (col === 7) {
+      if (
+        board[row + 1][col - 1].color !== color &&
+        board[row + 1][col - 1].letter !== ''
+      ) {
+        validMoves.push({ row: row + 1, col: col - 1, enemy: true });
+      }
+    }
+    if (col === 0) {
+      if (
+        board[row + 1][col + 1].color !== color &&
+        board[row + 1][col + 1].letter !== ''
+      ) {
+        validMoves.push({ row: row + 1, col: col + 1, enemy: true });
+      }
     }
   }
 

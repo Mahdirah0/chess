@@ -1,8 +1,8 @@
 const boardElement = document.querySelector('.board');
 
-const playAsWhiteButton = document.querySelector('.play-as-white');
-const playAsBlackButton = document.querySelector('.play-as-black');
-const playAsText = document.querySelector('.play-as-text');
+// const playAsWhiteButton = document.querySelector('.play-as-white');
+// const playAsBlackButton = document.querySelector('.play-as-black');
+// const playAsText = document.querySelector('.play-as-text');
 
 import { createBoard, renderBoard } from './modules/board.js';
 import {
@@ -156,6 +156,8 @@ const handleClick = (e) => {
   const clickedCol = parseInt(pos[2]);
   const { letter, color } = board[clickedRow][clickedCol];
 
+  console.log(letter, color);
+
   let sameTeam = userSelection.color === color;
   let samePiece =
     userSelection.row === clickedRow && userSelection.col === clickedCol;
@@ -214,22 +216,22 @@ const main = () => {
 
 main();
 
-const hideHTMLButtons = () => {
-  playAsWhiteButton.style.display = 'none';
-  playAsBlackButton.style.display = 'none';
-  playAsText.style.display = 'none';
-};
+// const hideHTMLButtons = () => {
+//   playAsWhiteButton.style.display = 'none';
+//   playAsBlackButton.style.display = 'none';
+//   playAsText.style.display = 'none';
+// };
 
-playAsWhiteButton.addEventListener('click', () => {
-  playerColor = 'white';
-  hideHTMLButtons();
+// playAsWhiteButton.addEventListener('click', () => {
+//   playerColor = 'white';
+//   hideHTMLButtons();
 
-  main();
-});
+//   main();
+// });
 
-playAsBlackButton.addEventListener('click', () => {
-  playerColor = 'black';
-  hideHTMLButtons();
+// playAsBlackButton.addEventListener('click', () => {
+//   playerColor = 'black';
+//   hideHTMLButtons();
 
-  main();
-});
+//   main();
+// });

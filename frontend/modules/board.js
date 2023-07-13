@@ -62,26 +62,26 @@ export const createBoard = (board, playerColor) => {
   //   pathToIcon: `../icons/bp.png`,
   //   color: 'black',
   // };
-  board[2][4] = {
-    letter: 'R',
-    pathToIcon: `../icons/bp.png`,
-    color: 'black',
-  };
+  // board[2][4] = {
+  //   letter: 'R',
+  //   pathToIcon: `../icons/bp.png`,
+  //   color: 'black',
+  // };
   //  board[2][5] = {
   //   letter: 'P',
   //   pathToIcon: `../icons/bp.png`,
   //   color: 'black',
   // };
-  board[4][5] = {
-    letter: 'ki',
-    pathToIcon: `../icons/${playerFirstLetter}ki.png`,
-    color: 'white',
-  };
-  board[5][4] = {
-    letter: 'P',
-    pathToIcon: `../icons/bp.png`,
-    color: 'black',
-  };
+  // board[4][5] = {
+  //   letter: 'ki',
+  //   pathToIcon: `../icons/${playerFirstLetter}ki.png`,
+  //   color: 'white',
+  // };
+  // board[5][4] = {
+  //   letter: 'P',
+  //   pathToIcon: `../icons/bp.png`,
+  //   color: 'black',
+  // };
 };
 
 export const renderBoard = (board, boardElement) => {
@@ -95,12 +95,12 @@ export const renderBoard = (board, boardElement) => {
       const img = document.createElement('img');
       if (letter !== '') {
         img.src = pathToIcon;
-        img.style.height = '30px';
-        img.style.width = '30px';
+        img.style.height = '60px';
+        img.style.width = '60px';
         img.style.pointerEvents = 'none';
       }
 
-      colDiv.innerHTML = letter;
+      // colDiv.innerHTML = letter;
 
       const backgroundColor = j % 2 == i % 2 ? 'white' : 'burlywood';
       colDiv.style.backgroundColor = backgroundColor;
